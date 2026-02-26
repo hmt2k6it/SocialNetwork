@@ -1,12 +1,10 @@
 package com.example.socialnetwork.module.identity.service.impl;
 
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.example.socialnetwork.common.exception.AppException;
 import com.example.socialnetwork.common.exception.ErrorCode;
+import com.example.socialnetwork.common.utils.SecurityUtil;
 import com.example.socialnetwork.module.identity.dto.request.UserUpdateRequest;
 import com.example.socialnetwork.module.identity.dto.response.UserPrivateResponse;
 import com.example.socialnetwork.module.identity.dto.response.UserPublicResponse;
@@ -18,12 +16,10 @@ import com.example.socialnetwork.module.identity.service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Slf4j
 public class UserServiceImpl implements UserService {
     UserRepository userRepository;
     UserMapper userMapper;
@@ -40,12 +36,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private User getUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication instanceof AnonymousAuthenticationToken) {
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
-        }
-        String userId = authentication.getName();
+        String userId = SecurityUtil.getCurrentUserId();
         return userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
