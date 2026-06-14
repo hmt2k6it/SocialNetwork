@@ -37,7 +37,21 @@ public enum ErrorCode {
         ROLE_EXIST(2014, "Role already exists", HttpStatus.BAD_REQUEST),
         PERMISSION_EXIST(2015, "Permission already exists", HttpStatus.BAD_REQUEST),
         PERMISSION_NOT_FOUND(2016, "Permission not found", HttpStatus.BAD_REQUEST),
-        USER_BANNED(2017, "User is banned", HttpStatus.BAD_REQUEST);
+        USER_BANNED(2017, "User is banned", HttpStatus.BAD_REQUEST),
+        //Relationship Module: 3xxx
+        RELATIONSHIP_NOT_FOUND(3001, "Relationship or friend request not found", HttpStatus.NOT_FOUND),
+        CANNOT_ADD_SELF(3002, "Cannot perform action on yourself", HttpStatus.BAD_REQUEST),
+        BLOCKED_BY_USER(3003, "Cannot interact due to block settings", HttpStatus.FORBIDDEN),
+        ALREADY_FRIENDS(3004, "You are already friends", HttpStatus.CONFLICT),
+        FRIEND_REQUEST_ALREADY_SENT(3005, "Friend request already sent", HttpStatus.CONFLICT),
+        FRIEND_REQUEST_ALREADY_RECEIVED(3006, "Friend request already received", HttpStatus.CONFLICT),
+        NOT_REQUEST_OWNER(3007, "Not authorized to handle this request", HttpStatus.FORBIDDEN),
+        REQUEST_ALREADY_HANDLED(3008, "Friend request already handled", HttpStatus.CONFLICT),
+        NOT_FRIENDS(3009, "You are not friends", HttpStatus.CONFLICT),
+        ALREADY_BLOCKED(3010, "User already blocked", HttpStatus.CONFLICT),
+        FRIEND_LIMIT_EXCEEDED(3011, "You have reached the maximum number of friends", HttpStatus.BAD_REQUEST),
+        TARGET_FRIEND_LIMIT_EXCEEDED(3012, "Target user has reached the maximum number of friends", HttpStatus.BAD_REQUEST),
+        ;
 
         int code;
         String message;
