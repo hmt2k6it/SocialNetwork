@@ -3,6 +3,7 @@ package com.example.socialnetwork.module.identity.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
 import com.example.socialnetwork.module.identity.dto.request.UserCreationRequest;
 import com.example.socialnetwork.module.identity.dto.request.UserUpdateRequest;
@@ -47,6 +48,7 @@ public interface UserMapper {
     @Mapping(target = "deleteAt", ignore = true)
     void updateUserFromRequest(UserUpdateRequest userUpdateRequest, @MappingTarget User user);
 
+    @Named("toUserPublicResponse")
     UserPublicResponse toUserPublicResponse(User user);
 
 }
