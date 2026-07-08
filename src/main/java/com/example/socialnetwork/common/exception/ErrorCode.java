@@ -41,7 +41,8 @@ public enum ErrorCode {
         //Relationship Module: 3xxx
         RELATIONSHIP_NOT_FOUND(3001, "Relationship or friend request not found", HttpStatus.NOT_FOUND),
         CANNOT_ADD_SELF(3002, "Cannot perform action on yourself", HttpStatus.BAD_REQUEST),
-        BLOCKED_BY_USER(3003, "Cannot interact due to block settings", HttpStatus.FORBIDDEN),
+        YOU_BLOCKED_USER(3013, "You cannot interact with a user you have blocked", HttpStatus.BAD_REQUEST),
+        BLOCKED_BY_USER(3003, "You have been blocked by this user", HttpStatus.FORBIDDEN),
         ALREADY_FRIENDS(3004, "You are already friends", HttpStatus.CONFLICT),
         FRIEND_REQUEST_ALREADY_SENT(3005, "Friend request already sent", HttpStatus.CONFLICT),
         FRIEND_REQUEST_ALREADY_RECEIVED(3006, "Friend request already received", HttpStatus.CONFLICT),

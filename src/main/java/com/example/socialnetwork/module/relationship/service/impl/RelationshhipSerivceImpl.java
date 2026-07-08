@@ -39,14 +39,14 @@ public class RelationshhipSerivceImpl implements RelationshipService {
         if (currentUserId.equals(targetUserId)) {
             throw new AppException(ErrorCode.CANNOT_ADD_SELF);
         }
-        // Todo: Check block 2 chiều
+        User currentUser = userService.getUserReference(currentUserId);
+        User targetUser = userService.getUserReference(targetUserId);
+
+        // TODO: Check block 2 chiều
 
         boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
-        String user1Id = isCurrentFirst ? currentUserId : targetUserId;
-        String user2Id = isCurrentFirst ? targetUserId : currentUserId;
-
-        User user1 = userService.getUserReference(user1Id);
-        User user2 = userService.getUserReference(user2Id);
+        User user1 = isCurrentFirst ? currentUser : targetUser;
+        User user2 = isCurrentFirst ? targetUser : currentUser;
 
         Optional<Friendship> friendship = friendshipRepository.findByUser1AndUser2(user1, user2);
 

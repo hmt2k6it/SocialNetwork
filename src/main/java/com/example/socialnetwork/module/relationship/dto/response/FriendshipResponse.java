@@ -21,15 +21,15 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FriendshipResponse {
 
-    String id;
+    String friendshipId;
 
-    String user1Id;
+    UserPublicResponse user1;
 
-    String user2Id;
+    UserPublicResponse user2;
 
     String actionUserId;
 
-    FriendshipStatus status;    
+    FriendshipStatus status;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

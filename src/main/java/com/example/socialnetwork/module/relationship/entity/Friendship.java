@@ -49,7 +49,8 @@ import lombok.experimental.FieldDefaults;
 public class Friendship {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
+    @Column(name = "friendship_id")
+    String friendshipId;
 
     // user1 luôn có UUID nhỏ hơn user2 theo thứ tự từ điển (Canonical Ordering)
     @ManyToOne(fetch = FetchType.LAZY)
