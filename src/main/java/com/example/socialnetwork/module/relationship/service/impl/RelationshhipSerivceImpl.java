@@ -21,6 +21,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +30,9 @@ public class RelationshhipSerivceImpl implements RelationshipService {
     FriendshipRepository friendshipRepository;
     UserService userService;
     RelationshipMapper relationshipMapper;
+
     @Override
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public FriendshipResponse sendRequest(String targetUserId) {
         String currentUserId = SecurityUtil.getCurrentUserId();
         if (!userService.existsByUserId(targetUserId)) {
@@ -39,14 +41,20 @@ public class RelationshhipSerivceImpl implements RelationshipService {
         if (currentUserId.equals(targetUserId)) {
             throw new AppException(ErrorCode.CANNOT_ADD_SELF);
         }
-        User currentUser = userService.getUserReference(currentUserId);
-        User targetUser = userService.getUserReference(targetUserId);
 
         // TODO: Check block 2 chiều
 
         boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
-        User user1 = isCurrentFirst ? currentUser : targetUser;
-        User user2 = isCurrentFirst ? targetUser : currentUser;
+        User user1;
+        User user2;
+        if (isCurrentFirst) {
+            user1 = userService.getUserReference(currentUserId);
+            user2 = userService.getUserReference(targetUserId);
+        } else {
+            user1 = userService.getUserReference(targetUserId);
+            user2 = userService.getUserReference(currentUserId);
+
+        }
 
         Optional<Friendship> friendship = friendshipRepository.findByUser1AndUser2(user1, user2);
 
@@ -63,7 +71,7 @@ public class RelationshhipSerivceImpl implements RelationshipService {
             if (status.equals(FriendshipStatus.ACCEPTED)) {
                 throw new AppException(ErrorCode.ALREADY_FRIENDS);
             }
-            
+
             existingFriendship.setStatus(FriendshipStatus.PENDING);
             existingFriendship.setActionUserId(currentUserId);
             return relationshipMapper.toFriendshipResponse(friendshipRepository.save(existingFriendship));
@@ -77,6 +85,7 @@ public class RelationshhipSerivceImpl implements RelationshipService {
             return relationshipMapper.toFriendshipResponse(friendshipRepository.save(newFriendship));
         }
     }
+
     @Override
     public FriendshipResponse acceptRequest(String relationshipId) {
         // TODO Auto-generated method stub
