@@ -30,16 +30,12 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(
-    name = "friendships", 
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user1_id", "user2_id"}, name = "uq_friendships_pair")
-    },
-    indexes = {
-        @Index(name = "idx_friendships_users", columnList = "user1_id, user2_id"),
-        @Index(name = "idx_friendships_user2", columnList = "user2_id")
-    }
-)
+@Table(name = "friendships", uniqueConstraints = {
+		@UniqueConstraint(columnNames = { "user1_id", "user2_id" }, name = "uq_friendships_pair")
+}, indexes = {
+		@Index(name = "idx_friendships_users", columnList = "user1_id, user2_id"),
+		@Index(name = "idx_friendships_user2", columnList = "user2_id")
+})
 @Getter
 @Setter
 @AllArgsConstructor
@@ -47,33 +43,33 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Friendship {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "friendship_id")
-    String friendshipId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@Column(name = "friendship_id")
+	String friendshipId;
 
-    // user1 luôn có UUID nhỏ hơn user2 theo thứ tự từ điển (Canonical Ordering)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user1_id", nullable = false)
-    User user1;
+	// user1 luôn có UUID nhỏ hơn user2 theo thứ tự từ điển (Canonical Ordering)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user1_id", nullable = false)
+	User user1;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user2_id", nullable = false)
-    User user2;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user2_id", nullable = false)
+	User user2;
 
-    // Người thực hiện hành động cuối cùng (VD: Gửi request, Accept, Unfriend)
-    @Column(name = "action_user_id", nullable = false)
-    String actionUserId;
+	// Người thực hiện hành động cuối cùng (VD: Gửi request, Accept, Unfriend)
+	@Column(name = "action_user_id", nullable = false)
+	String actionUserId;
 
-    @Enumerated(EnumType.STRING)
-    FriendshipStatus status;
+	@Enumerated(EnumType.STRING)
+	FriendshipStatus status;
 
-    @Version
-    Long version; // Chống Race Condition (Optimistic Locking)
+	@Version
+	Long version; // Chống Race Condition (Optimistic Locking)
 
-    @CreationTimestamp
-    LocalDateTime createdAt;
+	@CreationTimestamp
+	LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    LocalDateTime updatedAt;
+	@UpdateTimestamp
+	LocalDateTime updatedAt;
 }
