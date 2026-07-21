@@ -23,6 +23,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -32,7 +33,6 @@ public class RelationshhipSerivceImpl implements RelationshipService {
     RelationshipMapper relationshipMapper;
 
     @Override
-    @Transactional
     public FriendshipResponse sendRequest(String targetUserId) {
         String currentUserId = SecurityUtil.getCurrentUserId();
         if (!userService.existsByUserId(targetUserId)) {
@@ -100,8 +100,35 @@ public class RelationshhipSerivceImpl implements RelationshipService {
 
     @Override
     public String unsendRequest(String targetUserId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'unsendRequest'");
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        if (!userService.existsByUserId(targetUserId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
+        User user1;
+        User user2;
+        if (isCurrentFirst) {
+            user1 = userService.getUserReference(currentUserId);
+            user2 = userService.getUserReference(targetUserId);
+        } else {
+            user1 = userService.getUserReference(targetUserId);
+            user2 = userService.getUserReference(currentUserId);
+        }
+
+        Friendship friendship = friendshipRepository.findByUser1AndUser2(user1, user2)
+                .orElseThrow(() -> new AppException(ErrorCode.RELATIONSHIP_NOT_FOUND));
+
+        if (friendship.getStatus() != FriendshipStatus.PENDING) {
+            throw new AppException(ErrorCode.REQUEST_ALREADY_HANDLED);
+        }
+
+        if (!friendship.getActionUserId().equals(currentUserId)) {
+            throw new AppException(ErrorCode.NOT_REQUEST_OWNER);
+        }
+
+        friendshipRepository.delete(friendship);
+        return "Friend request unsent successfully";
     }
 
     @Override

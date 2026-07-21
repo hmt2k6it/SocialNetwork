@@ -1,5 +1,6 @@
 package com.example.socialnetwork.module.relationship.controller;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,13 @@ public class RelationshipController {
     public ApiResponse<FriendshipResponse> sendRequest(@PathVariable String targetUserId) {
         return ApiResponse.<FriendshipResponse>builder()
                 .result(relationshipService.sendRequest(targetUserId))
+                .build();
+    }
+
+    @DeleteMapping("/requests/{targetUserId}")
+    public ApiResponse<String> unsendRequest(@PathVariable String targetUserId) {
+        return ApiResponse.<String>builder()
+                .result(relationshipService.unsendRequest(targetUserId))
                 .build();
     }
 
