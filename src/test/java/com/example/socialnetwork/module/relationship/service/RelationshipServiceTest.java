@@ -507,4 +507,109 @@ public class RelationshipServiceTest {
                                 () -> relationshipService.rejectRequest(relationshipId));
                 assertEquals(ErrorCode.REQUEST_ALREADY_HANDLED, exception.getErrorCode());
         }
+
+        @Test
+        void unfriend_SelfUnfriend_ThrowsAppException() {
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.unfriend(currentUserId));
+                assertEquals(ErrorCode.CANNOT_ADD_SELF, exception.getErrorCode());
+        }
+
+        @Test
+        void unfriend_UserNotFound_ThrowsAppException() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(false);
+
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.unfriend(targetUserId));
+                assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+        }
+
+        @Test
+        void unfriend_Success_CurrentIdLessThanTargetId() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                Friendship friendship = Friendship.builder()
+                                .user1(currentUser)
+                                .user2(targetUser)
+                                .status(FriendshipStatus.ACCEPTED)
+                                .actionUserId(targetUserId)
+                                .build();
+
+                when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
+                                .thenReturn(Optional.of(friendship));
+                when(friendshipRepository.save(any(Friendship.class))).thenReturn(friendship);
+                when(relationshipMapper.toFriendshipResponse(friendship)).thenReturn(mock(FriendshipResponse.class));
+
+                FriendshipResponse response = relationshipService.unfriend(targetUserId);
+
+                assertNotNull(response);
+                verify(friendshipRepository).save(argThat(f -> f.getStatus() == FriendshipStatus.UNFRIENDED &&
+                                f.getActionUserId().equals(currentUserId)));
+        }
+
+        @Test
+        void unfriend_Success_CurrentIdGreaterThanTargetId() {
+                currentUserId = "user-Z";
+                targetUserId = "user-B";
+                mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(currentUserId);
+
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                currentUser = User.builder().userId(currentUserId).build();
+                targetUser = User.builder().userId(targetUserId).build();
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                Friendship friendship = Friendship.builder()
+                                .user1(targetUser)
+                                .user2(currentUser)
+                                .status(FriendshipStatus.ACCEPTED)
+                                .actionUserId(targetUserId)
+                                .build();
+
+                when(friendshipRepository.findByUser1AndUser2(targetUser, currentUser))
+                                .thenReturn(Optional.of(friendship));
+                when(friendshipRepository.save(any(Friendship.class))).thenReturn(friendship);
+                when(relationshipMapper.toFriendshipResponse(friendship)).thenReturn(mock(FriendshipResponse.class));
+
+                FriendshipResponse response = relationshipService.unfriend(targetUserId);
+
+                assertNotNull(response);
+                verify(friendshipRepository).save(argThat(f -> f.getStatus() == FriendshipStatus.UNFRIENDED &&
+                                f.getActionUserId().equals(currentUserId)));
+        }
+
+        @Test
+        void unfriend_RelationshipNotFound_ThrowsAppException() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
+                                .thenReturn(Optional.empty());
+
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.unfriend(targetUserId));
+                assertEquals(ErrorCode.RELATIONSHIP_NOT_FOUND, exception.getErrorCode());
+        }
+
+        @Test
+        void unfriend_NotFriends_ThrowsAppException() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                Friendship friendship = Friendship.builder()
+                                .status(FriendshipStatus.PENDING)
+                                .actionUserId(targetUserId)
+                                .build();
+
+                when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
+                                .thenReturn(Optional.of(friendship));
+
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.unfriend(targetUserId));
+                assertEquals(ErrorCode.NOT_FRIENDS, exception.getErrorCode());
+        }
 }
