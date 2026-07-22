@@ -14,8 +14,8 @@ public interface RelationshipService {
     FriendshipResponse rejectRequest(String relationshipId);
 
     String unsendRequest(String targetUserId);
-    
-    String unfriend(String targetUserId);
+
+    FriendshipResponse unfriend(String targetUserId);
 
     String getRelationshipStatus(String targetUserId); // Thêm hàm lấy trạng thái quan hệ
 

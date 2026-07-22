@@ -44,4 +44,18 @@ public class RelationshipController {
                 .build();
     }
 
+    @PutMapping("/requests/{friendshipId}/reject")
+    public ApiResponse<FriendshipResponse> rejectRequest(@PathVariable String friendshipId) {
+        return ApiResponse.<FriendshipResponse>builder()
+                .result(relationshipService.rejectRequest(friendshipId))
+                .build();
+    }
+
+    @DeleteMapping("/{targetUserId}")
+    public ApiResponse<FriendshipResponse> unfriend(@PathVariable String targetUserId) {
+        return ApiResponse.<FriendshipResponse>builder()
+                .result(relationshipService.unfriend(targetUserId))
+                .build();
+    }
+
 }
