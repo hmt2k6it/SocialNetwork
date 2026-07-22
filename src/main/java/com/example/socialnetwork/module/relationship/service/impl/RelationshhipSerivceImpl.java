@@ -1,7 +1,6 @@
 package com.example.socialnetwork.module.relationship.service.impl;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
