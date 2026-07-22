@@ -418,4 +418,93 @@ public class RelationshipServiceTest {
                                 () -> relationshipService.unsendRequest(targetUserId));
                 assertEquals(ErrorCode.NOT_REQUEST_OWNER, exception.getErrorCode());
         }
+
+        @Test
+        void rejectRequest_Success() {
+                String relationshipId = "rel-123";
+                Friendship friendship = Friendship.builder()
+                                .friendshipId(relationshipId)
+                                .user1(currentUser)
+                                .user2(targetUser)
+                                .status(FriendshipStatus.PENDING)
+                                .actionUserId(targetUserId)
+                                .build();
+
+                when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.of(friendship));
+                when(friendshipRepository.save(any(Friendship.class))).thenReturn(friendship);
+                when(relationshipMapper.toFriendshipResponse(friendship)).thenReturn(mock(FriendshipResponse.class));
+
+                FriendshipResponse response = relationshipService.rejectRequest(relationshipId);
+
+                assertNotNull(response);
+                verify(friendshipRepository).save(argThat(f -> f.getStatus() == FriendshipStatus.DECLINED &&
+                                f.getActionUserId().equals(currentUserId)));
+        }
+
+        @Test
+        void rejectRequest_RelationshipNotFound_ThrowsAppException() {
+                String relationshipId = "invalid-id";
+                when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.empty());
+
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.rejectRequest(relationshipId));
+                assertEquals(ErrorCode.RELATIONSHIP_NOT_FOUND, exception.getErrorCode());
+        }
+
+        @Test
+        void rejectRequest_SenderTriesToReject_ThrowsAppException() {
+                String relationshipId = "rel-123";
+                Friendship friendship = Friendship.builder()
+                                .friendshipId(relationshipId)
+                                .user1(currentUser)
+                                .user2(targetUser)
+                                .status(FriendshipStatus.PENDING)
+                                .actionUserId(currentUserId)
+                                .build();
+
+                when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.of(friendship));
+
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.rejectRequest(relationshipId));
+                assertEquals(ErrorCode.NOT_REQUEST_OWNER, exception.getErrorCode());
+        }
+
+        @Test
+        void rejectRequest_OutsiderTriesToReject_ThrowsAppException() {
+                String relationshipId = "rel-123";
+                User userB = User.builder().userId("user-B").build();
+                User userC = User.builder().userId("user-C").build();
+
+                Friendship friendship = Friendship.builder()
+                                .friendshipId(relationshipId)
+                                .user1(userB)
+                                .user2(userC)
+                                .status(FriendshipStatus.PENDING)
+                                .actionUserId("user-B")
+                                .build();
+
+                when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.of(friendship));
+
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.rejectRequest(relationshipId));
+                assertEquals(ErrorCode.NOT_REQUEST_OWNER, exception.getErrorCode());
+        }
+
+        @Test
+        void rejectRequest_RequestAlreadyHandled_ThrowsAppException() {
+                String relationshipId = "rel-123";
+                Friendship friendship = Friendship.builder()
+                                .friendshipId(relationshipId)
+                                .user1(currentUser)
+                                .user2(targetUser)
+                                .status(FriendshipStatus.DECLINED)
+                                .actionUserId(targetUserId)
+                                .build();
+
+                when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.of(friendship));
+
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.rejectRequest(relationshipId));
+                assertEquals(ErrorCode.REQUEST_ALREADY_HANDLED, exception.getErrorCode());
+        }
 }
