@@ -109,8 +109,23 @@ public class RelationshhipSerivceImpl implements RelationshipService {
 
     @Override
     public FriendshipResponse rejectRequest(String relationshipId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'rejectRequest'");
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        Friendship friendship = friendshipRepository.findById(relationshipId).orElseThrow(
+                () -> new AppException(ErrorCode.RELATIONSHIP_NOT_FOUND));
+        // Check xem có phải là người nhận không
+        boolean isReceiver = friendship.getUser1().getUserId().equals(currentUserId)
+                || friendship.getUser2().getUserId().equals(currentUserId);
+        // Check xem có phải là là đúng người nhận và không phải là người gửi
+        if (!isReceiver || currentUserId.equals(friendship.getActionUserId())) {
+            throw new AppException(ErrorCode.NOT_REQUEST_OWNER);
+        }
+
+        if (friendship.getStatus() != FriendshipStatus.PENDING) {
+            throw new AppException(ErrorCode.REQUEST_ALREADY_HANDLED);
+        }
+        friendship.setStatus(FriendshipStatus.DECLINED);
+        friendship.setActionUserId(currentUserId);
+        return relationshipMapper.toFriendshipResponse(friendshipRepository.save(friendship));
     }
 
     @Override
