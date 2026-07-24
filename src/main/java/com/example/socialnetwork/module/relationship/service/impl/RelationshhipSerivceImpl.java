@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.socialnetwork.module.identity.mapper.UserMapper;
 
 @Transactional
 @Service
@@ -31,6 +32,7 @@ public class RelationshhipSerivceImpl implements RelationshipService {
     FriendshipRepository friendshipRepository;
     UserService userService;
     RelationshipMapper relationshipMapper;
+    UserMapper userMapper;
 
     @Override
     public FriendshipResponse sendRequest(String targetUserId) {
@@ -232,9 +234,19 @@ public class RelationshhipSerivceImpl implements RelationshipService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<UserPublicResponse> getFriends(Pageable pageable) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getFriends'");
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        User currentUser = userService.getUserReference(currentUserId);
+
+        Page<Friendship> friendships = friendshipRepository.findFriends(currentUser, pageable);
+
+        return friendships.map(friendship -> {
+            User friend = friendship.getUser1().getUserId().equals(currentUserId)
+                    ? friendship.getUser2()
+                    : friendship.getUser1();
+            return userMapper.toUserPublicResponse(friend);
+        });
     }
 
     @Override
