@@ -21,12 +21,14 @@ public interface FriendshipRepository extends JpaRepository<Friendship, String> 
     @Query("SELECT f FROM Friendship f WHERE (f.user1 = :user OR f.user2 = :user) AND f.status = 'ACCEPTED'")
     Page<Friendship> findFriends(@Param("user") User user, Pageable pageable);
 
-    // Lấy danh sách yêu cầu chờ duyệt ĐẾN mình (status = PENDING và actionUserId KHÁC
+    // Lấy danh sách yêu cầu chờ duyệt ĐẾN mình (status = PENDING và actionUserId
+    // KHÁC
     // mình)
     @Query("SELECT f FROM Friendship f WHERE (f.user1 = :user OR f.user2 = :user) AND f.status = 'PENDING' AND f.actionUserId != :#{#user.userId}")
     Page<Friendship> findIncomingRequests(@Param("user") User user, Pageable pageable);
 
-    // Lấy danh sách yêu cầu mình ĐÃ GỬI đi (status = PENDING và actionUserId LÀ mình)
+    // Lấy danh sách yêu cầu mình ĐÃ GỬI đi (status = PENDING và actionUserId LÀ
+    // mình)
     @Query("SELECT f FROM Friendship f WHERE (f.user1 = :user OR f.user2 = :user) AND f.status = 'PENDING' AND f.actionUserId = :#{#user.userId}")
     Page<Friendship> findOutgoingRequests(@Param("user") User user, Pageable pageable);
 }

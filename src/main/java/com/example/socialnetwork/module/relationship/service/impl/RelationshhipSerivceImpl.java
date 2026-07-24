@@ -192,9 +192,43 @@ public class RelationshhipSerivceImpl implements RelationshipService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public String getRelationshipStatus(String targetUserId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getRelationshipStatus'");
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        if (!userService.existsByUserId(targetUserId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+        if (currentUserId.equals(targetUserId)) {
+            return "SELF";
+        }
+        // Check block 2 chiều
+        boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
+        User user1;
+        User user2;
+        if (isCurrentFirst) {
+            user1 = userService.getUserReference(currentUserId);
+            user2 = userService.getUserReference(targetUserId);
+        } else {
+            user1 = userService.getUserReference(targetUserId);
+            user2 = userService.getUserReference(currentUserId);
+        }
+
+        Optional<Friendship> friendship = friendshipRepository.findByUser1AndUser2(user1, user2);
+        if (friendship.isEmpty()) {
+            return "NONE";
+        }
+        FriendshipStatus status = friendship.get().getStatus();
+        if (status.equals(FriendshipStatus.DECLINED) || status.equals(FriendshipStatus.UNFRIENDED)) {
+            return "NONE";
+        }
+        if (status.equals(FriendshipStatus.PENDING)) {
+            if (currentUserId.equals(friendship.get().getActionUserId())) {
+                return "PENDING_OUTGOING";
+            } else {
+                return "PENDING_INCOMING";
+            }
+        }
+        return "ACCEPTED";
     }
 
     @Override

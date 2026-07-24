@@ -1,6 +1,7 @@
 package com.example.socialnetwork.module.relationship.controller;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -44,17 +45,10 @@ public class RelationshipController {
                 .build();
     }
 
-    @PutMapping("/requests/{friendshipId}/reject")
-    public ApiResponse<FriendshipResponse> rejectRequest(@PathVariable String friendshipId) {
-        return ApiResponse.<FriendshipResponse>builder()
-                .result(relationshipService.rejectRequest(friendshipId))
-                .build();
-    }
-
-    @DeleteMapping("/{targetUserId}")
-    public ApiResponse<FriendshipResponse> unfriend(@PathVariable String targetUserId) {
-        return ApiResponse.<FriendshipResponse>builder()
-                .result(relationshipService.unfriend(targetUserId))
+    @GetMapping("/status/{targetUserId}")
+    public ApiResponse<String> getRelationshipStatus(@PathVariable String targetUserId) {
+        return ApiResponse.<String>builder()
+                .result(relationshipService.getRelationshipStatus(targetUserId))
                 .build();
     }
 
