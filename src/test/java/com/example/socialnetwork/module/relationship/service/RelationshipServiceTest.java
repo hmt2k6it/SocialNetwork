@@ -612,4 +612,116 @@ public class RelationshipServiceTest {
                                 () -> relationshipService.unfriend(targetUserId));
                 assertEquals(ErrorCode.NOT_FRIENDS, exception.getErrorCode());
         }
+
+        @Test
+        void getRelationshipStatus_UserNotFound_ThrowsAppException() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(false);
+
+                AppException exception = assertThrows(AppException.class,
+                                () -> relationshipService.getRelationshipStatus(targetUserId));
+                assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
+        }
+
+        @Test
+        void getRelationshipStatus_Self_ReturnsSelf() {
+                when(userService.existsByUserId(currentUserId)).thenReturn(true);
+
+                String status = relationshipService.getRelationshipStatus(currentUserId);
+
+                assertEquals("SELF", status);
+        }
+
+        @Test
+        void getRelationshipStatus_NoRelationship_ReturnsNone() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
+                                .thenReturn(Optional.empty());
+
+                String status = relationshipService.getRelationshipStatus(targetUserId);
+
+                assertEquals("NONE", status);
+        }
+
+        @Test
+        void getRelationshipStatus_DeclinedOrUnfriended_ReturnsNone() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                Friendship friendship = Friendship.builder()
+                                .status(FriendshipStatus.DECLINED)
+                                .build();
+
+                when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
+                                .thenReturn(Optional.of(friendship));
+
+                String status = relationshipService.getRelationshipStatus(targetUserId);
+
+                assertEquals("NONE", status);
+        }
+
+        @Test
+        void getRelationshipStatus_PendingOutgoing_CurrentIdLessThanTargetId_ReturnsPendingOutgoing() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                Friendship friendship = Friendship.builder()
+                                .status(FriendshipStatus.PENDING)
+                                .actionUserId(currentUserId)
+                                .build();
+
+                when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
+                                .thenReturn(Optional.of(friendship));
+
+                String status = relationshipService.getRelationshipStatus(targetUserId);
+
+                assertEquals("PENDING_OUTGOING", status);
+        }
+
+        @Test
+        void getRelationshipStatus_PendingIncoming_CurrentIdGreaterThanTargetId_ReturnsPendingIncoming() {
+                currentUserId = "user-Z";
+                targetUserId = "user-B";
+                mockedSecurityUtil.when(SecurityUtil::getCurrentUserId).thenReturn(currentUserId);
+
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                currentUser = User.builder().userId(currentUserId).build();
+                targetUser = User.builder().userId(targetUserId).build();
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                Friendship friendship = Friendship.builder()
+                                .status(FriendshipStatus.PENDING)
+                                .actionUserId(targetUserId)
+                                .build();
+
+                when(friendshipRepository.findByUser1AndUser2(targetUser, currentUser))
+                                .thenReturn(Optional.of(friendship));
+
+                String status = relationshipService.getRelationshipStatus(targetUserId);
+
+                assertEquals("PENDING_INCOMING", status);
+        }
+
+        @Test
+        void getRelationshipStatus_Accepted_ReturnsAccepted() {
+                when(userService.existsByUserId(targetUserId)).thenReturn(true);
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(userService.getUserReference(targetUserId)).thenReturn(targetUser);
+
+                Friendship friendship = Friendship.builder()
+                                .status(FriendshipStatus.ACCEPTED)
+                                .build();
+
+                when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
+                                .thenReturn(Optional.of(friendship));
+
+                String status = relationshipService.getRelationshipStatus(targetUserId);
+
+                assertEquals("ACCEPTED", status);
+        }
 }
