@@ -8,7 +8,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import com.example.socialnetwork.common.dto.response.ApiResponse;
+import com.example.socialnetwork.module.identity.dto.response.UserPublicResponse;
 import com.example.socialnetwork.module.relationship.dto.response.FriendshipResponse;
 import com.example.socialnetwork.module.relationship.service.RelationshipService;
 
@@ -49,6 +54,13 @@ public class RelationshipController {
     public ApiResponse<String> getRelationshipStatus(@PathVariable String targetUserId) {
         return ApiResponse.<String>builder()
                 .result(relationshipService.getRelationshipStatus(targetUserId))
+                .build();
+    }
+
+    @GetMapping("/friends")
+    public ApiResponse<Page<UserPublicResponse>> getFriends(@PageableDefault(size = 20) Pageable pageable) {
+        return ApiResponse.<Page<UserPublicResponse>>builder()
+                .result(relationshipService.getFriends(pageable))
                 .build();
     }
 
