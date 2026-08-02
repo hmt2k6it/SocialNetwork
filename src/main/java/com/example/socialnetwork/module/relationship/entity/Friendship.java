@@ -5,7 +5,11 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.example.socialnetwork.common.exception.AppException;
+import com.example.socialnetwork.common.exception.ErrorCode;
 import com.example.socialnetwork.module.identity.entity.User;
+import com.example.socialnetwork.module.relationship.enums.FriendshipStatus;
+import com.example.socialnetwork.module.relationship.enums.RelationshipState;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -72,4 +76,83 @@ public class Friendship {
 
 	@UpdateTimestamp
 	LocalDateTime updatedAt;
+
+	public void accept(String currentUserId) {
+		validateReceiver(currentUserId);
+		this.status = FriendshipStatus.ACCEPTED;
+		this.actionUserId = currentUserId;
+	}
+
+	public void renew(String currentUserId) {
+		if (status.equals(FriendshipStatus.PENDING)) {
+			if (this.getActionUserId().equals(currentUserId)) {
+				throw new AppException(ErrorCode.FRIEND_REQUEST_ALREADY_SENT);
+			} else {
+				throw new AppException(ErrorCode.FRIEND_REQUEST_ALREADY_RECEIVED);
+			}
+		}
+		if (status.equals(FriendshipStatus.ACCEPTED)) {
+			throw new AppException(ErrorCode.ALREADY_FRIENDS);
+		}
+
+		this.setStatus(FriendshipStatus.PENDING);
+		this.setActionUserId(currentUserId);
+	}
+
+	public void reject(String currentUserId) {
+		validateReceiver(currentUserId);
+		this.setStatus(FriendshipStatus.DECLINED);
+		this.setActionUserId(currentUserId);
+	}
+
+	public static Friendship create(User user1, User user2, String actionUserId) {
+		return Friendship.builder()
+				.user1(user1)
+				.user2(user2)
+				.actionUserId(actionUserId)
+				.status(FriendshipStatus.PENDING)
+				.build();
+	}
+
+	public void unfriend(String currentUserId) {
+		if (!this.status.equals(FriendshipStatus.ACCEPTED)) {
+			throw new AppException(ErrorCode.NOT_FRIENDS);
+		}
+		this.setActionUserId(currentUserId);
+		this.setStatus(FriendshipStatus.UNFRIENDED);
+	}
+
+	public void validateCanUnsend(String currentUserId) {
+		if (this.status != FriendshipStatus.PENDING) {
+			throw new AppException(ErrorCode.REQUEST_ALREADY_HANDLED);
+		}
+		if (!this.actionUserId.equals(currentUserId)) {
+			throw new AppException(ErrorCode.NOT_REQUEST_OWNER);
+		}
+	}
+
+	private void validateReceiver(String currentUserId) {
+		boolean isReceiver = this.getUser1().getUserId().equals(currentUserId)
+				|| this.getUser2().getUserId().equals(currentUserId);
+		// Check xem có phải là là đúng người nhận và không phải là người gửi
+		if (!isReceiver || currentUserId.equals(this.getActionUserId())) {
+			throw new AppException(ErrorCode.NOT_REQUEST_OWNER);
+		}
+
+		if (this.getStatus() != FriendshipStatus.PENDING) {
+			throw new AppException(ErrorCode.REQUEST_ALREADY_HANDLED);
+		}
+	}
+
+	public RelationshipState getStateForUser(String currentUserId) {
+		if (this.status == FriendshipStatus.DECLINED || this.status == FriendshipStatus.UNFRIENDED) {
+			return RelationshipState.NONE;
+		}
+		if (this.status == FriendshipStatus.PENDING) {
+			return this.actionUserId.equals(currentUserId)
+					? RelationshipState.PENDING_OUTGOING
+					: RelationshipState.PENDING_INCOMING;
+		}
+		return RelationshipState.ACCEPTED;
+	}
 }
