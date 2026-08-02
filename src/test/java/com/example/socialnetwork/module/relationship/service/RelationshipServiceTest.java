@@ -23,7 +23,8 @@ import com.example.socialnetwork.module.identity.entity.User;
 import com.example.socialnetwork.module.identity.service.UserService;
 import com.example.socialnetwork.module.relationship.dto.response.FriendshipResponse;
 import com.example.socialnetwork.module.relationship.entity.Friendship;
-import com.example.socialnetwork.module.relationship.entity.FriendshipStatus;
+import com.example.socialnetwork.module.relationship.enums.FriendshipStatus;
+import com.example.socialnetwork.module.relationship.enums.RelationshipState;
 import com.example.socialnetwork.module.relationship.mapper.RelationshipMapper;
 import com.example.socialnetwork.module.relationship.repository.FriendshipRepository;
 import com.example.socialnetwork.module.relationship.service.impl.RelationshhipSerivceImpl;
@@ -626,9 +627,9 @@ public class RelationshipServiceTest {
         void getRelationshipStatus_Self_ReturnsSelf() {
                 when(userService.existsByUserId(currentUserId)).thenReturn(true);
 
-                String status = relationshipService.getRelationshipStatus(currentUserId);
+                RelationshipState status = relationshipService.getRelationshipStatus(currentUserId);
 
-                assertEquals("SELF", status);
+                assertEquals(RelationshipState.SELF, status);
         }
 
         @Test
@@ -640,9 +641,9 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
                                 .thenReturn(Optional.empty());
 
-                String status = relationshipService.getRelationshipStatus(targetUserId);
+                RelationshipState status = relationshipService.getRelationshipStatus(targetUserId);
 
-                assertEquals("NONE", status);
+                assertEquals(RelationshipState.NONE, status);
         }
 
         @Test
@@ -658,9 +659,9 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
                                 .thenReturn(Optional.of(friendship));
 
-                String status = relationshipService.getRelationshipStatus(targetUserId);
+                RelationshipState status = relationshipService.getRelationshipStatus(targetUserId);
 
-                assertEquals("NONE", status);
+                assertEquals(RelationshipState.NONE, status);
         }
 
         @Test
@@ -677,9 +678,9 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
                                 .thenReturn(Optional.of(friendship));
 
-                String status = relationshipService.getRelationshipStatus(targetUserId);
+                RelationshipState status = relationshipService.getRelationshipStatus(targetUserId);
 
-                assertEquals("PENDING_OUTGOING", status);
+                assertEquals(RelationshipState.PENDING_OUTGOING, status);
         }
 
         @Test
@@ -702,9 +703,9 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.findByUser1AndUser2(targetUser, currentUser))
                                 .thenReturn(Optional.of(friendship));
 
-                String status = relationshipService.getRelationshipStatus(targetUserId);
+                RelationshipState status = relationshipService.getRelationshipStatus(targetUserId);
 
-                assertEquals("PENDING_INCOMING", status);
+                assertEquals(RelationshipState.PENDING_INCOMING, status);
         }
 
         @Test
@@ -720,8 +721,8 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.findByUser1AndUser2(currentUser, targetUser))
                                 .thenReturn(Optional.of(friendship));
 
-                String status = relationshipService.getRelationshipStatus(targetUserId);
+                RelationshipState status = relationshipService.getRelationshipStatus(targetUserId);
 
-                assertEquals("ACCEPTED", status);
+                assertEquals(RelationshipState.ACCEPTED, status);
         }
 }
