@@ -11,7 +11,7 @@ import com.example.socialnetwork.module.relationship.dto.response.FriendshipResp
 import com.example.socialnetwork.module.relationship.entity.Friendship;
 import com.example.socialnetwork.module.relationship.service.RelationshipService;
 import com.example.socialnetwork.module.relationship.repository.FriendshipRepository;
-import com.example.socialnetwork.module.relationship.entity.FriendshipStatus;
+import com.example.socialnetwork.module.relationship.enums.RelationshipState;
 import com.example.socialnetwork.module.relationship.mapper.RelationshipMapper;
 import com.example.socialnetwork.common.exception.AppException;
 import com.example.socialnetwork.module.identity.entity.User;
@@ -46,44 +46,17 @@ public class RelationshhipSerivceImpl implements RelationshipService {
 
         // TODO: Check block 2 chiều
 
-        boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
-        User user1;
-        User user2;
-        if (isCurrentFirst) {
-            user1 = userService.getUserReference(currentUserId);
-            user2 = userService.getUserReference(targetUserId);
-        } else {
-            user1 = userService.getUserReference(targetUserId);
-            user2 = userService.getUserReference(currentUserId);
+        SortedUserPair sortedUsers = getSortedUserPair(currentUserId, targetUserId);
 
-        }
-
-        Optional<Friendship> friendship = friendshipRepository.findByUser1AndUser2(user1, user2);
+        Optional<Friendship> friendship = friendshipRepository.findByUser1AndUser2(sortedUsers.user1(),
+                sortedUsers.user2());
 
         if (friendship.isPresent()) {
             Friendship existingFriendship = friendship.get();
-            FriendshipStatus status = existingFriendship.getStatus();
-            if (status.equals(FriendshipStatus.PENDING)) {
-                if (existingFriendship.getActionUserId().equals(currentUserId)) {
-                    throw new AppException(ErrorCode.FRIEND_REQUEST_ALREADY_SENT);
-                } else {
-                    throw new AppException(ErrorCode.FRIEND_REQUEST_ALREADY_RECEIVED);
-                }
-            }
-            if (status.equals(FriendshipStatus.ACCEPTED)) {
-                throw new AppException(ErrorCode.ALREADY_FRIENDS);
-            }
-
-            existingFriendship.setStatus(FriendshipStatus.PENDING);
-            existingFriendship.setActionUserId(currentUserId);
+            existingFriendship.renew(currentUserId);
             return relationshipMapper.toFriendshipResponse(friendshipRepository.save(existingFriendship));
         } else {
-            Friendship newFriendship = Friendship.builder()
-                    .user1(user1)
-                    .user2(user2)
-                    .actionUserId(currentUserId)
-                    .status(FriendshipStatus.PENDING)
-                    .build();
+            Friendship newFriendship = Friendship.create(sortedUsers.user1(), sortedUsers.user2(), currentUserId);
             return relationshipMapper.toFriendshipResponse(friendshipRepository.save(newFriendship));
         }
     }
@@ -93,19 +66,7 @@ public class RelationshhipSerivceImpl implements RelationshipService {
         String currentUserId = SecurityUtil.getCurrentUserId();
         Friendship friendship = friendshipRepository.findById(relationshipId).orElseThrow(
                 () -> new AppException(ErrorCode.RELATIONSHIP_NOT_FOUND));
-        // Check xem có phải là người nhận không
-        boolean isReceiver = friendship.getUser1().getUserId().equals(currentUserId)
-                || friendship.getUser2().getUserId().equals(currentUserId);
-        // Check xem có phải là là đúng người nhận và không phải là người gửi
-        if (!isReceiver || currentUserId.equals(friendship.getActionUserId())) {
-            throw new AppException(ErrorCode.NOT_REQUEST_OWNER);
-        }
-
-        if (friendship.getStatus() != FriendshipStatus.PENDING) {
-            throw new AppException(ErrorCode.REQUEST_ALREADY_HANDLED);
-        }
-        friendship.setStatus(FriendshipStatus.ACCEPTED);
-        friendship.setActionUserId(currentUserId);
+        friendship.accept(currentUserId);
         return relationshipMapper.toFriendshipResponse(friendshipRepository.save(friendship));
     }
 
@@ -114,19 +75,7 @@ public class RelationshhipSerivceImpl implements RelationshipService {
         String currentUserId = SecurityUtil.getCurrentUserId();
         Friendship friendship = friendshipRepository.findById(relationshipId).orElseThrow(
                 () -> new AppException(ErrorCode.RELATIONSHIP_NOT_FOUND));
-        // Check xem có phải là người nhận không
-        boolean isReceiver = friendship.getUser1().getUserId().equals(currentUserId)
-                || friendship.getUser2().getUserId().equals(currentUserId);
-        // Check xem có phải là là đúng người nhận và không phải là người gửi
-        if (!isReceiver || currentUserId.equals(friendship.getActionUserId())) {
-            throw new AppException(ErrorCode.NOT_REQUEST_OWNER);
-        }
-
-        if (friendship.getStatus() != FriendshipStatus.PENDING) {
-            throw new AppException(ErrorCode.REQUEST_ALREADY_HANDLED);
-        }
-        friendship.setStatus(FriendshipStatus.DECLINED);
-        friendship.setActionUserId(currentUserId);
+        friendship.reject(currentUserId);
         return relationshipMapper.toFriendshipResponse(friendshipRepository.save(friendship));
     }
 
@@ -137,28 +86,11 @@ public class RelationshhipSerivceImpl implements RelationshipService {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
 
-        boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
-        User user1;
-        User user2;
-        if (isCurrentFirst) {
-            user1 = userService.getUserReference(currentUserId);
-            user2 = userService.getUserReference(targetUserId);
-        } else {
-            user1 = userService.getUserReference(targetUserId);
-            user2 = userService.getUserReference(currentUserId);
-        }
+        SortedUserPair sortedUsers = getSortedUserPair(currentUserId, targetUserId);
 
-        Friendship friendship = friendshipRepository.findByUser1AndUser2(user1, user2)
+        Friendship friendship = friendshipRepository.findByUser1AndUser2(sortedUsers.user1(), sortedUsers.user2())
                 .orElseThrow(() -> new AppException(ErrorCode.RELATIONSHIP_NOT_FOUND));
-
-        if (friendship.getStatus() != FriendshipStatus.PENDING) {
-            throw new AppException(ErrorCode.REQUEST_ALREADY_HANDLED);
-        }
-
-        if (!friendship.getActionUserId().equals(currentUserId)) {
-            throw new AppException(ErrorCode.NOT_REQUEST_OWNER);
-        }
-
+        friendship.validateCanUnsend(currentUserId);
         friendshipRepository.delete(friendship);
         return "Friend request unsent successfully";
     }
@@ -172,65 +104,32 @@ public class RelationshhipSerivceImpl implements RelationshipService {
         if (!userService.existsByUserId(targetUserId)) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
-        boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
-        User user1;
-        User user2;
-        if (isCurrentFirst) {
-            user1 = userService.getUserReference(currentUserId);
-            user2 = userService.getUserReference(targetUserId);
-        } else {
-            user1 = userService.getUserReference(targetUserId);
-            user2 = userService.getUserReference(currentUserId);
-        }
-        Friendship friendship = friendshipRepository.findByUser1AndUser2(user1, user2)
+        SortedUserPair sortedUsers = getSortedUserPair(currentUserId, targetUserId);
+        Friendship friendship = friendshipRepository.findByUser1AndUser2(sortedUsers.user1(), sortedUsers.user2())
                 .orElseThrow(() -> new AppException(ErrorCode.RELATIONSHIP_NOT_FOUND));
-        FriendshipStatus status = friendship.getStatus();
-        if (!status.equals(FriendshipStatus.ACCEPTED)) {
-            throw new AppException(ErrorCode.NOT_FRIENDS);
-        }
-        friendship.setActionUserId(currentUserId);
-        friendship.setStatus(FriendshipStatus.UNFRIENDED);
+        friendship.unfriend(currentUserId);
         return relationshipMapper.toFriendshipResponse(friendshipRepository.save(friendship));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public String getRelationshipStatus(String targetUserId) {
+    public RelationshipState getRelationshipStatus(String targetUserId) {
         String currentUserId = SecurityUtil.getCurrentUserId();
         if (!userService.existsByUserId(targetUserId)) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
         if (currentUserId.equals(targetUserId)) {
-            return "SELF";
+            return RelationshipState.SELF;
         }
         // Check block 2 chiều
-        boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
-        User user1;
-        User user2;
-        if (isCurrentFirst) {
-            user1 = userService.getUserReference(currentUserId);
-            user2 = userService.getUserReference(targetUserId);
-        } else {
-            user1 = userService.getUserReference(targetUserId);
-            user2 = userService.getUserReference(currentUserId);
-        }
+        SortedUserPair sortedUsers = getSortedUserPair(currentUserId, targetUserId);
 
-        Optional<Friendship> friendship = friendshipRepository.findByUser1AndUser2(user1, user2);
-        if (friendship.isEmpty()) {
-            return "NONE";
-        }
-        FriendshipStatus status = friendship.get().getStatus();
-        if (status.equals(FriendshipStatus.DECLINED) || status.equals(FriendshipStatus.UNFRIENDED)) {
-            return "NONE";
-        }
-        if (status.equals(FriendshipStatus.PENDING)) {
-            if (currentUserId.equals(friendship.get().getActionUserId())) {
-                return "PENDING_OUTGOING";
-            } else {
-                return "PENDING_INCOMING";
-            }
-        }
-        return "ACCEPTED";
+        Optional<Friendship> friendship = friendshipRepository.findByUser1AndUser2(sortedUsers.user1(),
+                sortedUsers.user2());
+
+        return friendship
+                .map(f -> f.getStateForUser(currentUserId))
+                .orElse(RelationshipState.NONE);
     }
 
     @Override
@@ -261,4 +160,20 @@ public class RelationshhipSerivceImpl implements RelationshipService {
         throw new UnsupportedOperationException("Unimplemented method 'getFriendsByUserId'");
     }
 
+    private SortedUserPair getSortedUserPair(String currentUserId, String targetUserId) {
+        boolean isCurrentFirst = currentUserId.compareTo(targetUserId) < 0;
+        User user1;
+        User user2;
+        if (isCurrentFirst) {
+            user1 = userService.getUserReference(currentUserId);
+            user2 = userService.getUserReference(targetUserId);
+        } else {
+            user1 = userService.getUserReference(targetUserId);
+            user2 = userService.getUserReference(currentUserId);
+        }
+        return new SortedUserPair(user1, user2);
+    }
+
+    private record SortedUserPair(User user1, User user2) {
+    }
 }

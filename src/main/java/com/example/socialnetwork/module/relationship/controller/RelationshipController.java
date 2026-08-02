@@ -15,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import com.example.socialnetwork.common.dto.response.ApiResponse;
 import com.example.socialnetwork.module.identity.dto.response.UserPublicResponse;
 import com.example.socialnetwork.module.relationship.dto.response.FriendshipResponse;
+import com.example.socialnetwork.module.relationship.enums.RelationshipState;
 import com.example.socialnetwork.module.relationship.service.RelationshipService;
 
 import lombok.AccessLevel;
@@ -51,8 +52,8 @@ public class RelationshipController {
     }
 
     @GetMapping("/status/{targetUserId}")
-    public ApiResponse<String> getRelationshipStatus(@PathVariable String targetUserId) {
-        return ApiResponse.<String>builder()
+    public ApiResponse<RelationshipState> getRelationshipStatus(@PathVariable String targetUserId) {
+        return ApiResponse.<RelationshipState>builder()
                 .result(relationshipService.getRelationshipStatus(targetUserId))
                 .build();
     }

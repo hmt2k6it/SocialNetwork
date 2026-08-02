@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.example.socialnetwork.module.identity.dto.response.UserPublicResponse;
 import com.example.socialnetwork.module.relationship.dto.response.FriendshipResponse;
+import com.example.socialnetwork.module.relationship.enums.RelationshipState;
 
 public interface RelationshipService {
     FriendshipResponse sendRequest(String targetUserId);
@@ -17,7 +18,7 @@ public interface RelationshipService {
 
     FriendshipResponse unfriend(String targetUserId);
 
-    String getRelationshipStatus(String targetUserId); // Thêm hàm lấy trạng thái quan hệ
+    RelationshipState getRelationshipStatus(String targetUserId); // Thêm hàm lấy trạng thái quan hệ
 
     Page<UserPublicResponse> getFriends(Pageable pageable);
 

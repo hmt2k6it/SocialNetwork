@@ -3,7 +3,7 @@ package com.example.socialnetwork.module.relationship.dto.response;
 import java.time.LocalDateTime;
 
 import com.example.socialnetwork.module.identity.dto.response.UserPublicResponse;
-import com.example.socialnetwork.module.relationship.entity.FriendshipStatus;
+import com.example.socialnetwork.module.relationship.enums.FriendshipStatus;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
