@@ -1,4 +1,4 @@
-package com.example.socialnetwork.module.relationship.entity;
+package com.example.socialnetwork.module.relationship.enums;
 
 public enum FriendshipStatus {
     PENDING,
