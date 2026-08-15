@@ -19,7 +19,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, String> 
     Optional<Friendship> findByUser1AndUser2(User user1, User user2);
 
     // Lấy danh sách bạn bè (status = ACCEPTED)
-    @EntityGraph(attributePaths = {"user1", "user2"})
+    @EntityGraph(attributePaths = { "user1", "user2" })
     @Query("SELECT f FROM Friendship f WHERE (f.user1 = :user OR f.user2 = :user) AND f.status = 'ACCEPTED'")
     Page<Friendship> findFriends(@Param("user") User user, Pageable pageable);
 
