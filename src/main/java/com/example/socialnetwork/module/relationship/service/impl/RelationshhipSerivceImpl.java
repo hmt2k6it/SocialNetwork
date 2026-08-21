@@ -149,9 +149,17 @@ public class RelationshhipSerivceImpl implements RelationshipService {
     }
 
     @Override
-    public Page<FriendshipResponse> getPendingRequests(String type, Pageable pageable, boolean isInComing) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPendingRequests'");
+    @Transactional(readOnly = true)
+    public Page<FriendshipResponse> getPendingRequests(String type, Pageable pageable) {
+        if (!"INCOMING".equalsIgnoreCase(type) && !"OUTGOING".equalsIgnoreCase(type)) {
+            throw new AppException(ErrorCode.INVALID_REQUEST_TYPE);
+        }
+        User currentUser = userService.getUserReference(SecurityUtil.getCurrentUserId());
+        Page<Friendship> requests = "INCOMING".equalsIgnoreCase(type)
+                ? friendshipRepository.findIncomingRequests(currentUser, pageable)
+                : friendshipRepository.findOutgoingRequests(currentUser, pageable);
+
+        return requests.map(relationshipMapper::toFriendshipResponse);
     }
 
     @Override

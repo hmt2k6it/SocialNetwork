@@ -38,7 +38,7 @@ public enum ErrorCode {
         PERMISSION_EXIST(2015, "Permission already exists", HttpStatus.BAD_REQUEST),
         PERMISSION_NOT_FOUND(2016, "Permission not found", HttpStatus.BAD_REQUEST),
         USER_BANNED(2017, "User is banned", HttpStatus.BAD_REQUEST),
-        //Relationship Module: 3xxx
+        // Relationship Module: 3xxx
         RELATIONSHIP_NOT_FOUND(3001, "Relationship or friend request not found", HttpStatus.NOT_FOUND),
         CANNOT_ADD_SELF(3002, "Cannot perform action on yourself", HttpStatus.BAD_REQUEST),
         YOU_BLOCKED_USER(3013, "You cannot interact with a user you have blocked", HttpStatus.BAD_REQUEST),
@@ -51,8 +51,9 @@ public enum ErrorCode {
         NOT_FRIENDS(3009, "You are not friends", HttpStatus.CONFLICT),
         ALREADY_BLOCKED(3010, "User already blocked", HttpStatus.CONFLICT),
         FRIEND_LIMIT_EXCEEDED(3011, "You have reached the maximum number of friends", HttpStatus.BAD_REQUEST),
-        TARGET_FRIEND_LIMIT_EXCEEDED(3012, "Target user has reached the maximum number of friends", HttpStatus.BAD_REQUEST),
-        ;
+        TARGET_FRIEND_LIMIT_EXCEEDED(3012, "Target user has reached the maximum number of friends",
+                        HttpStatus.BAD_REQUEST),
+        INVALID_REQUEST_TYPE(3016, "Invalid request type, must be INCOMING or OUTGOING", HttpStatus.BAD_REQUEST);
 
         int code;
         String message;

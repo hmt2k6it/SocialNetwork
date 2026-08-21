@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.data.domain.Page;
@@ -76,6 +77,14 @@ public class RelationshipController {
     public ApiResponse<Page<UserPublicResponse>> getFriends(@PageableDefault(size = 20) Pageable pageable) {
         return ApiResponse.<Page<UserPublicResponse>>builder()
                 .result(relationshipService.getFriends(pageable))
+                .build();
+    }
+
+    @GetMapping("/requests")
+    public ApiResponse<Page<FriendshipResponse>> getPendingRequests(@RequestParam String type,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ApiResponse.<Page<FriendshipResponse>>builder()
+                .result(relationshipService.getPendingRequests(type, pageable))
                 .build();
     }
 

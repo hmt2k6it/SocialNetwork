@@ -23,7 +23,7 @@ public interface RelationshipService {
     Page<UserPublicResponse> getFriends(Pageable pageable);
 
     // Tùy chọn: có thể thêm tham số type = INCOMING / OUTGOING
-    Page<FriendshipResponse> getPendingRequests(String type, Pageable pageable, boolean isInComing);
+    Page<FriendshipResponse> getPendingRequests(String type, Pageable pageable);
 
     Page<UserPublicResponse> getFriendsByUserId(String targetUserId, Pageable pageable);
 
