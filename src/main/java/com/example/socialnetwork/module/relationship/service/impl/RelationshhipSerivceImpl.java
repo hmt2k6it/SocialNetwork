@@ -163,9 +163,21 @@ public class RelationshhipSerivceImpl implements RelationshipService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<UserPublicResponse> getFriendsByUserId(String targetUserId, Pageable pageable) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getFriendsByUserId'");
+        if (!userService.existsByUserId(targetUserId)) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        User targetUser = userService.getUserReference(targetUserId);
+        Page<Friendship> friendships = friendshipRepository.findFriends(targetUser, pageable);
+
+        return friendships.map(friendship -> {
+            User friend = friendship.getUser1().getUserId().equals(targetUserId)
+                    ? friendship.getUser2()
+                    : friendship.getUser1();
+            return userMapper.toUserPublicResponse(friend);
+        });
     }
 
     private SortedUserPair getSortedUserPair(String currentUserId, String targetUserId) {

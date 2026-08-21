@@ -80,6 +80,14 @@ public class RelationshipController {
                 .build();
     }
 
+    @GetMapping("/{targetUserId}/friends")
+    public ApiResponse<Page<UserPublicResponse>> getFriendsByUserId(@PathVariable String targetUserId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ApiResponse.<Page<UserPublicResponse>>builder()
+                .result(relationshipService.getFriendsByUserId(targetUserId, pageable))
+                .build();
+    }
+
     @GetMapping("/requests")
     public ApiResponse<Page<FriendshipResponse>> getPendingRequests(@RequestParam String type,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -87,5 +95,4 @@ public class RelationshipController {
                 .result(relationshipService.getPendingRequests(type, pageable))
                 .build();
     }
-
 }
