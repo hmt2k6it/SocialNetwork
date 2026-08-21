@@ -71,11 +71,11 @@ public class RelationshhipSerivceImpl implements RelationshipService {
     }
 
     @Override
-    public FriendshipResponse rejectRequest(String relationshipId) {
+    public FriendshipResponse declineRequest(String relationshipId) {
         String currentUserId = SecurityUtil.getCurrentUserId();
         Friendship friendship = friendshipRepository.findById(relationshipId).orElseThrow(
                 () -> new AppException(ErrorCode.RELATIONSHIP_NOT_FOUND));
-        friendship.reject(currentUserId);
+        friendship.decline(currentUserId);
         return relationshipMapper.toFriendshipResponse(friendshipRepository.save(friendship));
     }
 

@@ -51,6 +51,20 @@ public class RelationshipController {
                 .build();
     }
 
+    @PutMapping("/{targetUserId}/unfriend")
+    public ApiResponse<FriendshipResponse> unfriend(@PathVariable String targetUserId) {
+        return ApiResponse.<FriendshipResponse>builder()
+                .result(relationshipService.unfriend(targetUserId))
+                .build();
+    }
+
+    @PutMapping("/requests/{friendshipId}/decline")
+    public ApiResponse<FriendshipResponse> declineRequest(@PathVariable String friendshipId) {
+        return ApiResponse.<FriendshipResponse>builder()
+                .result(relationshipService.declineRequest(friendshipId))
+                .build();
+    }
+
     @GetMapping("/status/{targetUserId}")
     public ApiResponse<RelationshipState> getRelationshipStatus(@PathVariable String targetUserId) {
         return ApiResponse.<RelationshipState>builder()

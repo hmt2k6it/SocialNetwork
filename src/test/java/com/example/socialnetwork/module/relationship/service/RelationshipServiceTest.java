@@ -421,7 +421,7 @@ public class RelationshipServiceTest {
         }
 
         @Test
-        void rejectRequest_Success() {
+        void declineRequest_Success() {
                 String relationshipId = "rel-123";
                 Friendship friendship = Friendship.builder()
                                 .friendshipId(relationshipId)
@@ -435,7 +435,7 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.save(any(Friendship.class))).thenReturn(friendship);
                 when(relationshipMapper.toFriendshipResponse(friendship)).thenReturn(mock(FriendshipResponse.class));
 
-                FriendshipResponse response = relationshipService.rejectRequest(relationshipId);
+                FriendshipResponse response = relationshipService.declineRequest(relationshipId);
 
                 assertNotNull(response);
                 verify(friendshipRepository).save(argThat(f -> f.getStatus() == FriendshipStatus.DECLINED &&
@@ -443,17 +443,17 @@ public class RelationshipServiceTest {
         }
 
         @Test
-        void rejectRequest_RelationshipNotFound_ThrowsAppException() {
+        void declineRequest_RelationshipNotFound_ThrowsAppException() {
                 String relationshipId = "invalid-id";
                 when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.empty());
 
                 AppException exception = assertThrows(AppException.class,
-                                () -> relationshipService.rejectRequest(relationshipId));
+                                () -> relationshipService.declineRequest(relationshipId));
                 assertEquals(ErrorCode.RELATIONSHIP_NOT_FOUND, exception.getErrorCode());
         }
 
         @Test
-        void rejectRequest_SenderTriesToReject_ThrowsAppException() {
+        void declineRequest_SenderTriesToReject_ThrowsAppException() {
                 String relationshipId = "rel-123";
                 Friendship friendship = Friendship.builder()
                                 .friendshipId(relationshipId)
@@ -466,12 +466,12 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.of(friendship));
 
                 AppException exception = assertThrows(AppException.class,
-                                () -> relationshipService.rejectRequest(relationshipId));
+                                () -> relationshipService.declineRequest(relationshipId));
                 assertEquals(ErrorCode.NOT_REQUEST_OWNER, exception.getErrorCode());
         }
 
         @Test
-        void rejectRequest_OutsiderTriesToReject_ThrowsAppException() {
+        void declineRequest_OutsiderTriesToReject_ThrowsAppException() {
                 String relationshipId = "rel-123";
                 User userB = User.builder().userId("user-B").build();
                 User userC = User.builder().userId("user-C").build();
@@ -487,12 +487,12 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.of(friendship));
 
                 AppException exception = assertThrows(AppException.class,
-                                () -> relationshipService.rejectRequest(relationshipId));
+                                () -> relationshipService.declineRequest(relationshipId));
                 assertEquals(ErrorCode.NOT_REQUEST_OWNER, exception.getErrorCode());
         }
 
         @Test
-        void rejectRequest_RequestAlreadyHandled_ThrowsAppException() {
+        void declineRequest_RequestAlreadyHandled_ThrowsAppException() {
                 String relationshipId = "rel-123";
                 Friendship friendship = Friendship.builder()
                                 .friendshipId(relationshipId)
@@ -505,7 +505,7 @@ public class RelationshipServiceTest {
                 when(friendshipRepository.findById(relationshipId)).thenReturn(Optional.of(friendship));
 
                 AppException exception = assertThrows(AppException.class,
-                                () -> relationshipService.rejectRequest(relationshipId));
+                                () -> relationshipService.declineRequest(relationshipId));
                 assertEquals(ErrorCode.REQUEST_ALREADY_HANDLED, exception.getErrorCode());
         }
 

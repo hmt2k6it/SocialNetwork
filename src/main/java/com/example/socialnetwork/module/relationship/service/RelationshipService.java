@@ -12,7 +12,7 @@ public interface RelationshipService {
 
     FriendshipResponse acceptRequest(String relationshipId);
 
-    FriendshipResponse rejectRequest(String relationshipId);
+    FriendshipResponse declineRequest(String relationshipId);
 
     String unsendRequest(String targetUserId);
 

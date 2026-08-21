@@ -99,7 +99,7 @@ public class Friendship {
 		this.setActionUserId(currentUserId);
 	}
 
-	public void reject(String currentUserId) {
+	public void decline(String currentUserId) {
 		validateReceiver(currentUserId);
 		this.setStatus(FriendshipStatus.DECLINED);
 		this.setActionUserId(currentUserId);
