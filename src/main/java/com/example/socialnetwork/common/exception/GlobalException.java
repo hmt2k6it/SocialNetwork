@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -57,6 +58,19 @@ public class GlobalException {
     public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException e) {
         log.warn("User being access over role!", e);
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.<Void>builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLockingConflict(
+            ObjectOptimisticLockingFailureException e) {
+        log.warn("Optimistic locking conflict: entity={}, identifier={}",
+                e.getPersistentClassName(), e.getIdentifier());
+        ErrorCode errorCode = ErrorCode.TRANSACTION_CONFLICT;
         return ResponseEntity.status(errorCode.getStatus())
                 .body(ApiResponse.<Void>builder()
                         .code(errorCode.getCode())

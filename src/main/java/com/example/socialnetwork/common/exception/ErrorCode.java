@@ -53,6 +53,8 @@ public enum ErrorCode {
         FRIEND_LIMIT_EXCEEDED(3011, "You have reached the maximum number of friends", HttpStatus.BAD_REQUEST),
         TARGET_FRIEND_LIMIT_EXCEEDED(3012, "Target user has reached the maximum number of friends",
                         HttpStatus.BAD_REQUEST),
+        TRANSACTION_CONFLICT(3015, "Data was updated concurrently, please refresh and try again",
+                        HttpStatus.CONFLICT),
         INVALID_REQUEST_TYPE(3016, "Invalid request type, must be INCOMING or OUTGOING", HttpStatus.BAD_REQUEST);
 
         int code;
