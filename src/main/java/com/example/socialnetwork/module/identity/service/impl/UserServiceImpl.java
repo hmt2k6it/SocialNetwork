@@ -24,11 +24,13 @@ public class UserServiceImpl implements UserService {
     UserRepository userRepository;
     UserMapper userMapper;
 
+    @Override
     public UserPrivateResponse getMyProfile() {
         User user = getUser();
         return userMapper.toUserPrivateResponse(user);
     }
 
+    @Override
     public UserPrivateResponse updateMyProfile(UserUpdateRequest userUpdateRequest) {
         User user = getUser();
         userMapper.updateUserFromRequest(userUpdateRequest, user);
@@ -51,4 +53,13 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserPublicResponse(user);
     }
 
+    @Override
+    public boolean existsByUserId(String userId) {
+        return userRepository.existsById(userId);
+    }
+
+    @Override
+    public User getUserReference(String userId) {
+        return userRepository.getReferenceById(userId);
+    }
 }

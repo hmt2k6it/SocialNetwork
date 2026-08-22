@@ -33,3 +33,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Bỏ qua các file biến môi trường chứa pass/secret
+.env

@@ -6,11 +6,9 @@ import java.util.Optional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.example.socialnetwork.module.identity.entity.User;
 
-@Repository
 public interface UserRepository extends JpaRepository<User, String> {
     @Override
     @EntityGraph(attributePaths = {"roles", "roles.permissions"})
