@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,11 +16,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.example.socialnetwork.common.exception.AppException;
 import com.example.socialnetwork.common.exception.ErrorCode;
 import com.example.socialnetwork.common.utils.SecurityUtil;
+import com.example.socialnetwork.module.identity.dto.response.UserPublicResponse;
 import com.example.socialnetwork.module.identity.entity.User;
+import com.example.socialnetwork.module.identity.mapper.UserMapper;
 import com.example.socialnetwork.module.identity.service.UserService;
 import com.example.socialnetwork.module.relationship.dto.response.FriendshipResponse;
 import com.example.socialnetwork.module.relationship.entity.Friendship;
@@ -39,6 +46,9 @@ public class RelationshipServiceTest {
 
         @Mock
         RelationshipMapper relationshipMapper;
+
+        @Mock
+        UserMapper userMapper;
 
         @InjectMocks
         RelationshhipSerivceImpl relationshipService;
@@ -724,5 +734,70 @@ public class RelationshipServiceTest {
                 RelationshipState status = relationshipService.getRelationshipStatus(targetUserId);
 
                 assertEquals(RelationshipState.ACCEPTED, status);
+        }
+
+        @Test
+        void getFriends_CurrentUserIsUser1_ReturnsUser2() {
+                Pageable pageable = PageRequest.of(0, 20);
+                Friendship friendship = Friendship.builder()
+                                .user1(currentUser)
+                                .user2(targetUser)
+                                .status(FriendshipStatus.ACCEPTED)
+                                .build();
+                UserPublicResponse expectedResponse = UserPublicResponse.builder()
+                                .firstName("Target")
+                                .build();
+
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(friendshipRepository.findFriends(currentUser, pageable))
+                                .thenReturn(new PageImpl<>(List.of(friendship), pageable, 1));
+                when(userMapper.toUserPublicResponse(targetUser)).thenReturn(expectedResponse);
+
+                Page<UserPublicResponse> result = relationshipService.getFriends(pageable);
+
+                assertEquals(1, result.getTotalElements());
+                assertSame(expectedResponse, result.getContent().get(0));
+                verify(friendshipRepository).findFriends(currentUser, pageable);
+                verify(userMapper).toUserPublicResponse(targetUser);
+        }
+
+        @Test
+        void getFriends_CurrentUserIsUser2_ReturnsUser1() {
+                Pageable pageable = PageRequest.of(0, 20);
+                Friendship friendship = Friendship.builder()
+                                .user1(targetUser)
+                                .user2(currentUser)
+                                .status(FriendshipStatus.ACCEPTED)
+                                .build();
+                UserPublicResponse expectedResponse = UserPublicResponse.builder()
+                                .firstName("Target")
+                                .build();
+
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(friendshipRepository.findFriends(currentUser, pageable))
+                                .thenReturn(new PageImpl<>(List.of(friendship), pageable, 1));
+                when(userMapper.toUserPublicResponse(targetUser)).thenReturn(expectedResponse);
+
+                Page<UserPublicResponse> result = relationshipService.getFriends(pageable);
+
+                assertEquals(1, result.getTotalElements());
+                assertSame(expectedResponse, result.getContent().get(0));
+                verify(friendshipRepository).findFriends(currentUser, pageable);
+                verify(userMapper).toUserPublicResponse(targetUser);
+        }
+
+        @Test
+        void getFriends_NoFriendships_ReturnsEmptyPage() {
+                Pageable pageable = PageRequest.of(0, 20);
+
+                when(userService.getUserReference(currentUserId)).thenReturn(currentUser);
+                when(friendshipRepository.findFriends(currentUser, pageable)).thenReturn(Page.empty(pageable));
+
+                Page<UserPublicResponse> result = relationshipService.getFriends(pageable);
+
+                assertTrue(result.isEmpty());
+                assertEquals(0, result.getTotalElements());
+                verify(friendshipRepository).findFriends(currentUser, pageable);
+                verifyNoInteractions(userMapper);
         }
 }
